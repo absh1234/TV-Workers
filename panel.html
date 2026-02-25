@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل انتخاب شبکه‌های IPTV</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .channels-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .channel-btn {
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            color: #333;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .channel-btn:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+            transform: translateX(-5px);
+        }
+
+        .channel-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .channel-info {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .channel-btn.active .channel-info {
+            opacity: 0.9;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-stream {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-stream:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-stream:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-copy {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-copy:hover {
+            background: #e0e0e0;
+        }
+
+        .current-url {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .url-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .url-text {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            word-break: break-all;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📺 انتخاب شبکه</h1>
+        <p class="subtitle">شبکه مورد نظر خود را انتخاب کنید</p>
+
+        <div class="channels-grid" id="channelsGrid"></div>
+
+        <div class="current-url">
+            <div class="url-label">📍 آدرس فعلی:</div>
+            <div class="url-text" id="currentUrl">شبکه‌ای انتخاب نشده</div>
+            <div class="status" id="status"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-copy" id="copyBtn">📋 کپی</button>
+            <button class="btn-stream" id="streamBtn" disabled>▶️ پخش</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #667eea;">در حال اتصال...</p>
+        </div>
+    </div>
+
+    <script>
+        let channels = [];
+        let selectedChannelId = null;
+        const workerUrl = 'https://YOUR_WORKER_NAME.YOUR_USERNAME.workers.dev';
+
+        // بارگذاری شبکه‌ها از فایل JSON
+        async function loadChannels() {
+            try {
+                const response = await fetch('list.json');
+                const data = await response.json();
+                channels = data.map((ch, idx) => ({
+                    id: idx,
+                    name: ch.name,
+                    url: ch.url
+                }));
+                renderChannels();
+            } catch (error) {
+                console.error('خطا در بارگذاری شبکه‌ها:', error);
+                showStatus('خطا در بارگذاری شبکه‌ها', 'error');
+            }
+        }
+
+        // رندر دکمه‌های شبکه‌ها
+        function renderChannels() {
+            const grid = document.getElementById('channelsGrid');
+            grid.innerHTML = '';
+
+            channels.forEach(ch => {
+                const btn = document.createElement('button');
+                btn.className = 'channel-btn';
+                btn.innerHTML = `
+                    <div>${ch.name}</div>
+                    <div class="channel-info">شبکه #${ch.id}</div>
+                `;
+                btn.onclick = () => selectChannel(ch.id);
+                grid.appendChild(btn);
+            });
+        }
+
+        // انتخاب شبکه
+        function selectChannel(id) {
+            selectedChannelId = id;
+            
+            // بروزرسانی استایل‌ها
+            document.querySelectorAll('.channel-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === id);
+            });
+
+            // بروزرسانی URL
+            updateUrl();
+            document.getElementById('streamBtn').disabled = false;
+            document.getElementById('status').style.display = 'none';
+        }
+
+        // بروزرسانی نمایش URL
+        function updateUrl() {
+            if (selectedChannelId === null) return;
+
+            const channel = channels[selectedChannelId];
+            const url = `${workerUrl}/${selectedChannelId}/index.m3u8`;
+            document.getElementById('currentUrl').textContent = url;
+        }
+
+        // کپی URL
+        document.getElementById('copyBtn').onclick = () => {
+            if (selectedChannelId === null) {
+                showStatus('لطفاً یک شبکه انتخاب کنید', 'error');
+                return;
+            }
+
+            const url = document.getElementById('currentUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                showStatus('✓ کپی شد', 'success');
+                setTimeout(() => document.getElementById('status').style.display = 'none', 2000);
+            });
+        };
+
+        // شروع پخش
+        document.getElementById('streamBtn').onclick = () => {
+            if (selectedChannelId === null) return;
+
+            const url = document.getElementById('currentUrl').textContent;
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            // می‌توانید طبق نیاز خود این را تغییر دهید
+            // مثال: باز کردن پخش‌کننده
+            setTimeout(() => {
+                loading.style.display = 'none';
+                showStatus('✓ آماده پخش', 'success');
+            }, 1000);
+        };
+
+        // نمایش پیام وضعیت
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // بارگذاری شبکه‌ها هنگام بارگذاری صفحه
+        loadChannels();
+    </script>
+</body>
+</html>
